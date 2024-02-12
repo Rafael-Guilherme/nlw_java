@@ -43,17 +43,17 @@ public class StudentCertificationAnswerUseCase {
         }
 
         List<QuestionEntity> questionsEntity =  questionRepository.findByTechnology(dto.getTechnology());
-        List<AnswerCertificationEntity> answersCertification = new ArrayList<>();
+        List<AnswerCertificationEntity> answersCertifications = new ArrayList<>();
 
         AtomicInteger correctAnswers = new AtomicInteger(0);
 
         dto.getQuestionsAnswers()
             .stream().forEach(questionAnswer -> {
-                var question = questionsEntity.stream().filter(q -> q.getId().equals(questionAnswer.getQuestionID()))
-                .findFirst().get();
+                var question = questionsEntity.stream()
+                    .filter(q -> q.getId().equals(questionAnswer.getQuestionID())).findFirst().get();
 
                 var findCorrectAlternative = question.getAlternatives().stream()
-                .filter(alternative -> alternative.isCorrect()).findFirst().get();
+                    .filter(alternative -> alternative.isCorrect()).findFirst().get();
 
                 if(findCorrectAlternative.getId().equals(questionAnswer.getAlternativeID())) {
                     questionAnswer.setCorrect(true);
@@ -62,17 +62,17 @@ public class StudentCertificationAnswerUseCase {
                     questionAnswer.setCorrect(false);
                 }
 
-                AnswerCertificationEntity answerCertificationEntity = AnswerCertificationEntity.builder()
+                var answerrsCertificationsEntity = AnswerCertificationEntity.builder()
                     .answerID(questionAnswer.getAlternativeID())
                     .questionID(questionAnswer.getQuestionID())
                     .isCorrect(questionAnswer.isCorrect()).build();
 
-                answersCertification.add(answerCertificationEntity);
+                answersCertifications.add(answerrsCertificationsEntity);
             });
 
         var student = studentRepository.findByEmail(dto.getEmail());
         UUID studentID;
-        if(!student.isEmpty()) {
+        if(student.isEmpty()) {
             var studentCreated = StudentEntity.builder().email(dto.getEmail()).build();
             studentCreated = studentRepository.save(studentCreated);
             studentID = studentCreated.getId();
@@ -88,12 +88,12 @@ public class StudentCertificationAnswerUseCase {
 
         var certificationStudentCreated =  certificationStudentRepository.save(certificationStudentEntity);
 
-        answersCertification.stream().forEach(answerCertification -> {
+        answersCertifications.stream().forEach(answerCertification -> {
             answerCertification.setCertificationID(certificationStudentEntity.getId());
             answerCertification.setCertificationStudentEntity(certificationStudentEntity);
         });
         
-        certificationStudentEntity.setAnswersCertificationsEntities((answersCertification));
+        certificationStudentEntity.setAnswersCertificationsEntities((answersCertifications));
 
         certificationStudentRepository.save(certificationStudentEntity);
         
